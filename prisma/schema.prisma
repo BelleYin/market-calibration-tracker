@@ -1,0 +1,49 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url       = env("DATABASE_URL")
+  directUrl = env("DATABASE_URL_UNPOOLED")
+}
+
+model User {
+  id           String   @id @default(cuid())
+  email        String   @unique
+  passwordHash String
+  createdAt    DateTime @default(now())
+}
+
+model Market {
+  id             String          @id @default(cuid())
+  ticker         String          @unique
+  title          String
+  category       String?
+  closeTime      DateTime
+  createdAt      DateTime        @default(now())
+  priceSnapshots PriceSnapshot[]
+  predictions    Prediction[]
+}
+
+model PriceSnapshot {
+  id        String   @id @default(cuid())
+  marketId  String
+  market    Market   @relation(fields: [marketId], references: [id])
+  yesPrice  Int      // cents, 0-100
+  noPrice   Int
+  volume    Int
+  timestamp DateTime @default(now())
+}
+
+model Prediction {
+  id            String    @id @default(cuid())
+  marketId      String
+  market        Market    @relation(fields: [marketId], references: [id])
+  predictedProb Float     // your stated probability, 0.0-1.0
+  reasoning     String?
+  createdAt     DateTime  @default(now())
+  resolved      Boolean   @default(false)
+  outcome       Boolean?  // true = YES, false = NO, null = unresolved
+  resolvedAt    DateTime?
+}
